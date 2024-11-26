@@ -1,0 +1,95 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+<div class="container my-5">
+    <h1 class="text-center mb-2">Search Conferences and Sessions</h1>
+
+    <!-- Search Bar -->
+    <div class="search-bar mb-4 text-center">
+        <input 
+            type="text" 
+            id="searchInput" 
+            class="form-control d-inline-block w-50" 
+            placeholder="Enter keyword to search..." 
+            value="{{ frappe.form_dict.keyword | default('', true) }}"
+        />
+        <button class="btn btn-primary ms-2" onclick="searchConferences()">Search</button>
+    </div>
+
+    <!-- Conferences List -->
+    {% if conferences %}
+        {% for conference in conferences %}
+        <div class="conference-item mb-4">
+            <!-- Conference Details -->
+            <h2 class="text-primary">{{ conference.conference_name }}</h2>
+            <hr class="styled-divider">
+            <p class="text-muted">
+                <strong>Start Date:</strong> {{ conference.start_date }} &nbsp;|&nbsp;
+                <strong>End Date:</strong> {{ conference.end_date }} &nbsp;|&nbsp;
+                <strong>Status:</strong> {{ conference.status }}
+            </p>
+
+            <!-- Sessions -->
+            <div class="session-list mt-3">
+                <h4 class="text-secondary">Sessions:</h4>
+                {% if conference.sessions %}
+                    <ul class="list-unstyled">
+                        {% for session in conference.sessions %}
+                        <li class="mb-3">
+                            <div class="session-details">
+                                <strong class="d-block">Session Name: {{ session.session_name }}</strong>
+                                <span class="text-info">Speaker: {{ session.speaker }}</span><br>
+                                <span class="text-muted">
+                                    Start Time: {{ session.start_time }} &nbsp;-&nbsp;
+                                    End Time: {{ session.end_time }}
+                                </span>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-warning">No matching sessions found for the keyword.</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-danger text-center">No conferences or matching sessions found for the keyword.</p>
+    {% endif %}
+</div>
+
+<style>
+    .styled-divider {
+        border: 0;
+        height: 3px;
+        background: linear-gradient(to right, #ff7e5f, #feb47b);
+        margin: 15px 0;
+    }
+    .conference-item {
+        padding: 20px;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+    }
+    .session-details {
+        padding: 10px 15px;
+        background-color: #ffffff;
+        border: 1px solid #e3e3e3;
+        border-radius: 5px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .session-list h4 {
+        margin-bottom: 15px;
+        border-left: 4px solid #6c757d;
+        padding-left: 10px;
+    }
+</style>
+
+<script type="text/javascript">
+    function searchConferences() {
+        var keyword = document.getElementById("searchInput").value;
+        // Reload the page with the keyword as a query parameter
+        window.location.href = "?keyword=" + encodeURIComponent(keyword);
+    }
+</script>
+{% endblock %}

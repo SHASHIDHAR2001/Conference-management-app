@@ -1,0 +1,21 @@
+{
+ "cards": [],
+ "charts": [
+  {
+   "chart": "",
+   "width": "Full"
+  }
+ ],
+ "creation": "2024-11-23 17:16:40.986120",
+ "dashboard_name": "Conference Management Analysis",
+ "docstatus": 0,
+ "doctype": "Dashboard",
+ "idx": 0,
+ "is_default": 0,
+ "is_standard": 1,
+ "modified": "2024-11-23 17:17:03.164966",
+ "modified_by": "Administrator",
+ "module": "Conference Management",
+ "name": "Conference Management Analysis",
+ "owner": "Administrator"
+}
