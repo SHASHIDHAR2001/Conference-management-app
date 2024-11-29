@@ -4,14 +4,18 @@ frappe.ui.form.on('Conference', {
         if (frm.is_new()) {
             // Prevent adding rows to the Session child table
             frm.fields_dict['sessions'].grid.cannot_add_rows = true;
-            // frappe.msgprint({
-            //     title: __('Save Conference First'),
-            //     indicator: 'orange',
-            //     message: __('Please save the Conference before adding Sessions.')
-            // });
         } else {
             // Allow adding rows to the Session child table for saved records
             frm.fields_dict['sessions'].grid.cannot_add_rows = false;
+
+            // Restrict the Conference field in the Session child table to the current conference
+            frm.fields_dict['sessions'].grid.get_field('conference').get_query = function () {
+                return {
+                    filters: {
+                        name: frm.doc.name
+                    }
+                };
+            };
         }
 
         // Refresh the child table to apply the changes

@@ -14,7 +14,7 @@ scheduler_events = {
 
 app_include_js = [
     "/assets/conference_management/js/registration-payment-update.js",
-    # "/assets/conference_management/js/getActiveSessionForReg.js",
+    "/assets/conference_management/js/getActiveSessionForReg.js",
     "/assets/conference_management/js/getRecommentationOnPreferences.js",
     "/assets/conference_management/js/validateconference.js"
 ]

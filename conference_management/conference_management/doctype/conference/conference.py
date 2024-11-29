@@ -4,6 +4,7 @@
 import frappe
 from frappe.model.document import Document
 from frappe.utils import get_datetime
+from datetime import timedelta
 
 class Conference(Document):
     def before_insert(self):
@@ -32,7 +33,8 @@ class Conference(Document):
     def validate_session_time(self, session):
         # Get the conference details to validate against
         conference_start = get_datetime(self.start_date)
-        conference_end = get_datetime(self.end_date)
+        conference_end = get_datetime(self.end_date) + timedelta(days=1)  # Allowing until the end of the conference day (midnight)
+
 
         # Convert the session's start and end time to datetime objects
         session_start = get_datetime(session.start_time)

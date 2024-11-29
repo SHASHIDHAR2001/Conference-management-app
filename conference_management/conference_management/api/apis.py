@@ -1,6 +1,7 @@
 import frappe
 from frappe.utils import nowdate,now
 from frappe import _
+from frappe.utils import get_datetime, now
 
 @frappe.whitelist()
 def get_sessions_with_details():
@@ -70,43 +71,94 @@ def send_daily_session_recommendations():
     attendees = frappe.get_all('Attendee', fields=['attendee_name', 'email'])
 
     for attendee in attendees:
+        print(attendee)
         # Fetch the preferences for the current attendee using the email
         preferences = frappe.get_all('Preference', filters={'parent': attendee['email']}, fields=['session'])
         preferred_sessions = [pref["session"] for pref in preferences]
 
+        # Get all sessions that the attendee is registered for
         registrations = frappe.get_all('Registration', filters={'attendee': attendee['email']}, fields=['session'])
         registered_sessions = [reg["session"] for reg in registrations]
 
-        # Combine all sessions of interest
-        preferences = list(set(preferred_sessions + registered_sessions))
+        # First fetch all sessions (combining preferred and registered ones)
+        all_sessions = list(set(preferred_sessions + registered_sessions))
 
+        # Initialize lists for valid (active/upcoming) and inactive sessions
+        valid_sessions = []
+        inactive_sessions = []
 
-        if preferences:
-            # Fetch recommended sessions based on the session preferences
-            recommended_sessions = get_sessions_based_on_preferences(preferences)
+        # Loop through all sessions to check their activity status
+        for session_id in all_sessions:
+            try:
+                session = frappe.get_doc('Session', session_id)
+            except Exception as e:
+                print(e)
+            current_time = get_datetime(now())
 
-            if recommended_sessions:  # Proceed only if there are recommendations
-                # Format the email content with recommended sessions
-                email_content = format_email_content(recommended_sessions)
+            # Check if the session is still active or upcoming (start time and end time comparison with current time)
+            if session.start_time > current_time:  # upcoming session
+                valid_sessions.append({
+                    'session_name': session.session_name,
+                    'start_time': session.start_time,
+                    'end_time': session.end_time,
+                    'speaker': session.speaker
+                })
+            elif session.start_time <= current_time <= session.end_time:  # active session (in progress)
+                valid_sessions.append({
+                    'session_name': session.session_name,
+                    'start_time': session.start_time,
+                    'end_time': session.end_time,
+                    'speaker': session.speaker
+                })
+            else:
+                # If session is inactive (already over), we store the session name and speaker
+                inactive_sessions.append({
+                    'session_name': session.session_name,
+                    'speaker': session.speaker
+                })
 
-                # Send email with session recommendations
-                send_email_to_attendee(attendee['email'], email_content)
+        # Now collect speakers from both valid and inactive sessions
+        speakers = [session['speaker'] for session in valid_sessions] + [session['speaker'] for session in inactive_sessions]
 
-def get_sessions_based_on_preferences(preferences):
-    """Fetch sessions based on attendee preferences."""
-    recommended_sessions = []
-    
-    for preference in preferences:
-        # Get the session linked to the preference using the session ID (which is a Link field in the Preference table)
-        session = frappe.get_doc('Session', preference['session'])
-        recommended_sessions.append({
-            'session_name': session.session_name,
-            'start_time': session.start_time,
-            'end_time': session.end_time,
-            'speaker': session.speaker
-        })
-    
-    return recommended_sessions
+        # Fetch additional sessions based on the speakers
+        recommended_sessions = []
+
+        for speaker in speakers:
+            # Get other sessions by the same speaker, excluding already added sessions
+            speaker_sessions = frappe.get_all('Session', filters={'speaker': speaker, 'name': ['not in', [session['session_name'] for session in valid_sessions]]}, fields=['session_name', 'start_time', 'end_time', 'speaker'])
+            for speaker_session in speaker_sessions:
+                current_time = get_datetime(now())
+                # Check if the session is active or upcoming
+                if speaker_session['start_time'] > current_time:  # Upcoming session
+                    recommended_sessions.append(speaker_session)
+                elif speaker_session['start_time'] <= current_time <= speaker_session['end_time']:  # Active session
+                    recommended_sessions.append(speaker_session)
+                # If the session has already expired, we skip adding it
+                else:
+                    continue
+
+        # Combine valid_sessions and recommended_sessions, removing duplicates based on session_name
+        final_sessions = []
+        seen_sessions = set()  # To track sessions that have already been added
+
+        # Add valid_sessions
+        for session in valid_sessions:
+            if session['session_name'] not in seen_sessions:
+                final_sessions.append(session)
+                seen_sessions.add(session['session_name'])
+
+        # Add recommended_sessions
+        for session in recommended_sessions:
+            if session['session_name'] not in seen_sessions:
+                final_sessions.append(session)
+                seen_sessions.add(session['session_name'])
+
+        # Send the email only if there are final sessions
+        if final_sessions:
+            email_content = format_email_content(final_sessions)
+
+            # Send email with session recommendations
+            send_email_to_attendee(attendee['email'], email_content)
 
 def format_email_content(sessions):
     """Format the session list into an HTML email body."""
@@ -127,7 +179,6 @@ def send_email_to_attendee(email, content):
         subject="Your Daily Session Recommendations",
         message=content
     )
-
 
 ## updating the mock payment status for apilog and registration page FROM UI
 @frappe.whitelist(allow_guest=True)

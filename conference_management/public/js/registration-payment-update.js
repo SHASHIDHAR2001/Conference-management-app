@@ -2,7 +2,9 @@ frappe.ui.form.on('Registration', {
     after_save: function (frm) {
         try {
             simulatePaymentProcessing(frm);
+            console.log("not calling only");
         } catch (error) {
+            console.log(error)
             logApiDetails({
                 conference: frm.doc.conference, // Link to Conference
                 session: frm.doc.session, // Link to Session
@@ -16,6 +18,7 @@ frappe.ui.form.on('Registration', {
 });
 
 function simulatePaymentProcessing(frm) {
+    console.log("yep shashidhar");
     const randomValue = Math.random();
     let paymentStatus;
 
