@@ -24,7 +24,8 @@ app_include_js = [
 ## API FOR LISTING ALL CONFERENCES AND THEIR SESSIONS   
 website_route_rules = [
     {"from_route": "/upcomingConferencesApi1", "to_route": "upcomingConferencesApi1"},
-    {"from_route": "/SearchconferenceSessionApi1", "to_route": "SearchconferenceSessionApi1"}
+    {"from_route": "/SearchconferenceSessionApi1", "to_route": "SearchconferenceSessionApi1"},
+    # {"from_route": "/attendee-dashboard", "to_page": "attendee_dashboard"}
 ]
 
 ## API for adding attendee and register

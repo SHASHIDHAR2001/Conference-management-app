@@ -18,7 +18,7 @@ def add_attendee_and_register():
         data = json.loads(data)  # Parse the JSON string into a dictionary
 
         # Prepare data for logging
-        api_endpoint = "api/method/conference_management/external_apis/addAttendeeAndRegisterApi/add_attendee_and_register"
+        api_endpoint = "api/method/add_attendee_and_register"
         method = frappe.local.request.method
         request_body = json.dumps(data)  # Log the incoming request body
         time_stamp = now()  # Current timestamp for the log
@@ -42,10 +42,13 @@ def add_attendee_and_register():
             if conference:
                 try:
                     # checking if the session is already registered in that conference
-                    existing_registration = frappe.get_all('Registration', filters={
-                        'conference': conference,
-                        'session': session_id
-                    })
+                    existing_registration = frappe.db.exists(
+                        "Registration", {
+                            "conference": registration_data["conference"],
+                            "session": registration_data["session"],
+                            "attendee": attendee_data["email"]
+                        }
+                    )
 
                     if existing_registration:
                         return {
@@ -101,22 +104,23 @@ def add_attendee_and_register():
             frappe.db.commit()  # Commit changes to ensure they are saved
             method = "POST"  # If creating a new attendee, it's a POST
 
-        # Add preferences if any
-        for pref in preferences_data:
-            session_name = pref.get("session")  # Get session name from preferences
-            if frappe.db.exists("Session", {"session_name": session_name}):
-                session_doc_name = frappe.db.get_value("Session", {"session_name": session_name}, "name")
-                # Check if this preference already exists for the attendee
-                existing_preference = next(
-                    (p for p in attendee_doc.preferences if p.session == session_doc_name), None
-                )
-                if existing_preference:
-                    existing_preference.session = session_doc_name
+        if preferences_data:
+            # Add preferences if any
+            for pref in preferences_data:
+                session_name = pref.get("session")  # Get session name from preferences
+                if frappe.db.exists("Session", {"session_name": session_name}):
+                    session_doc_name = frappe.db.get_value("Session", {"session_name": session_name}, "name")
+                    # Check if this preference already exists for the attendee
+                    existing_preference = next(
+                        (p for p in attendee_doc.preferences if p.session == session_doc_name), None
+                    )
+                    if existing_preference:
+                        existing_preference.session = session_doc_name
+                    else:
+                        # If preference does not exist, append it
+                        attendee_doc.append("preferences", {"session": session_doc_name})
                 else:
-                    # If preference does not exist, append it
-                    attendee_doc.append("preferences", {"session": session_doc_name})
-            else:
-                frappe.throw(f"Session '{session_name}' does not exist.")
+                    frappe.throw(f"Session '{session_name}' does not exist.")
 
         attendee_doc.save()  # Save preferences to the attendee doc
         frappe.db.commit()  # Commit changes to ensure they are saved
@@ -142,16 +146,8 @@ def add_attendee_and_register():
             })
 
             try:
-                frappe.get_doc({
-                    "doctype": "APILog",
-                    "api_endpoint": api_endpoint,
-                    "method": method,
-                    "request_body": request_body,
-                    "response_body": response_body,
-                    "status_code": status_code,
-                    "timestamp": time_stamp,
-                }).insert(ignore_permissions=True)
-                frappe.db.commit()
+                log_api_request(method, request_body, response_body, status_code)
+
             except Exception as log_exception:
                 frappe.log_error(frappe.get_traceback(), "API Log Error")
 
@@ -180,17 +176,7 @@ def add_attendee_and_register():
 
             # Log the successful API interaction (POST/PUT)
             try:
-                frappe.get_doc({
-                    "doctype": "APILog",
-                    "api_endpoint": api_endpoint,
-                    "method": method,
-                    "request_body": request_body,
-                    "response_body": response_body,
-                    "status_code": status_code,
-                    "timestamp": time_stamp,
-                }).insert(ignore_permissions=True)
-                frappe.db.commit()
-
+                log_api_request(method, request_body, response_body, status_code)
             except Exception as log_exception:
                 # If logging fails, still continue with the core functionality
                 frappe.log_error(frappe.get_traceback(), "API Log Error")
@@ -212,16 +198,8 @@ def add_attendee_and_register():
 
         # Log the failed API interaction (error scenario)
         try:
-            frappe.get_doc({
-                "doctype": "APILog",
-                "api_endpoint": api_endpoint,
-                "method": method,
-                "request_body": request_body,
-                "response_body": response_body,
-                "status_code": status_code,
-                "timestamp": time_stamp,
-            }).insert(ignore_permissions=True)
-            frappe.db.commit()
+            log_api_request(method, request_body, response_body, status_code)
+
         except Exception as log_exception:
             # If logging fails, still continue with the core functionality
             frappe.log_error(frappe.get_traceback(), "API Log Error")
@@ -230,3 +208,20 @@ def add_attendee_and_register():
             "status": "error",
             "message": str(e)
         }
+
+def log_api_request(method, request_body, response_body, status_code):
+
+        api_endpoint = "api/method/add_attendee_and_register"
+
+        frappe.get_doc({
+            "doctype": "APILog",
+            "api_endpoint": api_endpoint,
+            "method": method,
+            "request_body": request_body,  
+            "response_body": response_body, 
+            "timestamp": now(),
+            "status_code": status_code,
+        }).insert(ignore_permissions=True)
+        
+        # Commit the transaction
+        frappe.db.commit()

@@ -1,5 +1,10 @@
 {% extends "templates/web.html" %}
 
+{% block head %}
+    {{ super() }} 
+    <link rel="stylesheet" href="/assets/conference_management/css/SearchconferenceSessionApi1.css">
+{% endblock %}
+
 {% block page_content %}
 <div class="container my-5">
     <h1 class="text-center mb-2">Search Conferences and Sessions</h1>
@@ -57,33 +62,6 @@
         <p class="text-danger text-center">No conferences or matching sessions found for the keyword.</p>
     {% endif %}
 </div>
-
-<style>
-    .styled-divider {
-        border: 0;
-        height: 3px;
-        background: linear-gradient(to right, #ff7e5f, #feb47b);
-        margin: 15px 0;
-    }
-    .conference-item {
-        padding: 20px;
-        background-color: #f9f9f9;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-    }
-    .session-details {
-        padding: 10px 15px;
-        background-color: #ffffff;
-        border: 1px solid #e3e3e3;
-        border-radius: 5px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-    .session-list h4 {
-        margin-bottom: 15px;
-        border-left: 4px solid #6c757d;
-        padding-left: 10px;
-    }
-</style>
 
 <script type="text/javascript">
     function searchConferences() {
