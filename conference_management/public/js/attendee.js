@@ -34,23 +34,51 @@ $(document).ready(function() {
 
 // Load available conferences
 function loadAvailableConferences() {
-    $.get('/api/method/getupcomingConference', function(response) {
+    const attendeeEmail = $('#user-email').val();
+    $.get('/api/method/getupcomingConference',{ attendee_email: attendeeEmail }, function(response) {
         if (response.message && response.message.conferences && response.message.conferences.length > 0) {
             let conferenceHtml = '';
             response.message.conferences.forEach(function(conference) {
                 let sessionHtml = '';
+
+                const registeredSessionInfoSet = new Set(
+                    response.message.registered_session_info
+                        ? response.message.registered_session_info.map(
+                              ([session, conference]) => `${session}-${conference}`
+                          )
+                        : []
+                );
+
                 conference.sessions.forEach(function(session) {
+                    const sessionKey = `${session.session_name}-${conference.conference_name}`;
+                    const isRegistered = registeredSessionInfoSet.has(sessionKey);
                     sessionHtml += `
-                        <div class="session-details">
-                            <p class="session-name">Session: ${session.session_name}</p>
-                            <p class="session-speaker">Speaker: ${session.speaker}</p>
-                            <p class="session-time">Time: ${session.start_time} - ${session.end_time}</p>
-                            <p class="session-fee">Fee: ${session.session_fee}</p>
-                            <button class="register-btn" data-session-id="${session.name}" data-conference="${conference.conference_name}">
-                                Register
-                            </button>
-                        </div>
+                    <div class="session-details">
+                        <p class="session-name">Session: ${session.session_name}</p>
+                        <p class="session-speaker">Speaker: ${session.speaker}</p>
+                        <p class="session-time">Time: ${session.start_time} - ${session.end_time}</p>
+                        <p class="session-fee">Fee: ${session.session_fee}</p>
+                `;
+
+                // Conditionally add button based on registration status
+                if (isRegistered) {
+                    sessionHtml += `
+                        <button class="registered-btn" disabled>
+                            Registered
+                        </button>
                     `;
+                } else {
+                    sessionHtml += `
+                        <button class="register-btn" data-session-id="${session.name}" data-conference="${conference.conference_name}">
+                            Register
+                        </button>
+                    `;
+                }
+
+                // Close the session div
+                sessionHtml += `
+                </div>
+                `;
                 });
 
                 conferenceHtml += `

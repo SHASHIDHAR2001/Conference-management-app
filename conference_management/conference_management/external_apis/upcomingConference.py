@@ -64,8 +64,28 @@ def getupcomingConference():
                     "name": row['name']
                 })
 
+        attendee_email = frappe.local.form_dict.get("attendee_email")
+
+        # Fetch registered sessions
+        registered_sessions = []
+        if attendee_email:
+            registered_sessions = frappe.db.get_all(
+                "Registration",
+                filters={"attendee": attendee_email},
+                fields=["session", "conference"]
+            )
+
+        # Create a set of registered sessions
+        registered_session_info = {(reg["session"], reg["conference"]) for reg in registered_sessions}
+
         # Convert grouped conferences to a list for context
-        context = {"conferences": list(conferences.values())}
+        if not registered_sessions:
+            context = {"conferences": list(conferences.values())}
+        else:
+            context = {
+                    "conferences": list(conferences.values()),
+                    "registered_session_info": list(registered_session_info)  # Send as a list for JSON serialization
+            }
 
         # If no conferences are found
         if not context["conferences"]:
@@ -88,12 +108,9 @@ def log_api_request(conferences):
     
     try:
         time_stamp = now()
-        print(f"Timestamp: {time_stamp}")
         
         # Convert conferences list to JSON string
         conferences_json = json.dumps(conferences, default=serialize_date)
-
-        print(f"Conferences JSON: {conferences_json}")
         
         method = "GET"
         status_code = 200
@@ -103,14 +120,13 @@ def log_api_request(conferences):
         api_log = frappe.get_doc({
             "doctype": "APILog",
             "api_endpoint": api_endpoint,
-            "request_body": json.dumps(request_body),  # Serialize request body
+            "request_body": json.dumps(request_body), 
             "response_body": conferences_json,  # Serialized response body
             "method": method,
             "status_code": status_code,
             "timestamp": time_stamp
         })
         
-        print("Inserting log...")
         api_log.insert(ignore_permissions=True)
         frappe.db.commit()
         print("Log inserted successfully!")
@@ -123,8 +139,13 @@ def serialize_date(obj):
     Serialize unsupported objects like date to a JSON-serializable format.
     """
     if isinstance(obj, date):
-        return obj.isoformat()  # Convert date to ISO 8601 string format
+        return obj.isoformat() 
     raise TypeError("Type not serializable")
+
+
+
+
+
 
 
 
