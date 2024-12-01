@@ -19,7 +19,8 @@ def getupcomingConference():
                 c.end_date, 
                 c.status, 
                 c.description,
-                s.session_name, 
+                s.session_name,
+                s.name, 
                 s.speaker, 
                 s.start_time, 
                 s.end_time, 
@@ -59,7 +60,8 @@ def getupcomingConference():
                     "speaker": row["speaker"],
                     "start_time": row["start_time"],
                     "end_time": row["end_time"],
-                    "session_fee": row["session_fee"]
+                    "session_fee": row["session_fee"],
+                    "name": row['name']
                 })
 
         # Convert grouped conferences to a list for context

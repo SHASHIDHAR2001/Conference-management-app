@@ -1,0 +1,49 @@
+{% extends "templates/web.html" %}
+
+{% block title %}
+    Attendee Dashboard
+{% endblock %}
+
+{% block head %}
+    {{ super() }} 
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link rel="stylesheet" href="/assets/conference_management/css/attendee.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/assets/conference_management/js/attendee.js"></script>
+{% endblock %}
+
+{% block page_content %}
+<div class="container my-5">
+    <h1 class="text-center mb-5">Attendee Dashboard</h1>
+    <div class="container">
+        <div class="login-form">
+            <h2>Login</h2>
+            <input type="text" id="name" placeholder="Enter your name" required class="form-input" />
+            <input type="email" id="email" placeholder="Enter your email" required class="form-input" />
+            <button id="login-btn" class="btn">Login</button>
+        </div>
+        
+
+        <div class="dashboard" style="display: none;">
+            <h2>Welcome, <span id="user-name"></span></h2>
+            <input type="hidden" id="user-email" value="" />
+            <div>
+                <span class="tab active" id="available-tab">Available Conferences</span>
+                <span class="tab" id="registered-tab">Registered Sessions</span>
+            </div>
+            <div id="available-conferences">
+                <!-- Available conferences will be dynamically loaded here -->
+                <div class="conference">
+                    <h2 class="conference_name"></h2>
+                    <h3 class="conf_desc"></h3>
+                    <div class="session-list"></div>
+                </div>
+            </div>
+            <div id="registered-sessions" style="display: none;">
+                <!-- Registered sessions will be shown here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

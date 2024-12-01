@@ -24,7 +24,7 @@ app_include_js = [
 ## API FOR LISTING ALL CONFERENCES AND THEIR SESSIONS   
 website_route_rules = [
     {"from_route": "/upcomingConferencesApi1", "to_route": "upcomingConferencesApi1"},
-    {"from_route": "/SerchconferenceSessionApi1", "to_route": "SerchconferenceSessionApi1"}
+    {"from_route": "/SearchconferenceSessionApi1", "to_route": "SearchconferenceSessionApi1"}
 ]
 
 ## API for adding attendee and register
@@ -32,7 +32,8 @@ override_whitelisted_methods = {
 "add_attendee_and_register": "conference_management.conference_management.external_apis.addAttendeeAndRegisterApi.add_attendee_and_register",
 "process_mock_payment": "conference_management.conference_management.external_apis.paymentSimulationApi.process_mock_payment",
 "getupcomingConference": "conference_management.conference_management.external_apis.upcomingConference.getupcomingConference",
-"get_recommendations": "conference_management.conference_management.external_apis.getRecommendation.get_recommendations"
+"get_recommendations": "conference_management.conference_management.external_apis.getRecommendation.get_recommendations",
+"get_registered_sessions": "conference_management.conference_management.external_apis.getRegisteredSession.get_registered_sessions",
 
 }   
 
